@@ -1,0 +1,75 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class WebcamToRenderTexture : MonoBehaviour
+{
+    // 인스펙터 창에서 할당할 렌더 텍스처
+    public RenderTexture renderTexture;
+    // 인스펙터 창에서 확인할 수 있는 연결된 웹캠 목록
+    public string[] availableWebcams;
+    // 몇번째 웹캠 쓸 것 인가요?
+    public int currentWebcamIndex = 0;
+
+    private WebCamTexture webcamTexture;
+
+    void Start()
+    {
+        // 첫 번째 웹캠으로 시작
+        SetWebcam(currentWebcamIndex);
+    }
+    void Update()
+    {
+        // 매 프레임마다 WebCamTexture를 RenderTexture에 복사
+        if (webcamTexture.didUpdateThisFrame && renderTexture != null)
+        {
+            Graphics.Blit(webcamTexture, renderTexture);
+        }
+    }
+    public void SetWebcam(int index)
+    {
+        // 현재 사용 중인 웹캠을 정지하고 제거
+        if (webcamTexture != null)
+        {
+            webcamTexture.Stop();
+            Destroy(webcamTexture);
+            webcamTexture = null;
+        }
+
+        // 새 웹캠 인덱스 설정 및 시작
+        currentWebcamIndex = index;
+        StartWebcam();
+    }
+
+    private void StartWebcam()
+    {
+     // 인덱스의 유효성 검사
+     if (currentWebcamIndex >= 0 && currentWebcamIndex < WebCamTexture.devices.Length)
+     { 
+    // 선택한 인덱스에 해당하는 웹캠으로 WebCamTexture 생성
+    webcamTexture = new WebCamTexture(WebCamTexture.devices[currentWebcamIndex].name);
+
+    //WebCamTexture를 시작
+    webcamTexture.Play();
+    }
+    else
+    {
+            Debug.LogError("유효하지 않은 웹캠 인덱스입니다.");
+    }
+    }
+
+    private void OnValidate()
+{
+    InitializeWebcamList();
+}
+
+private void InitializeWebcamList()
+{
+    //사용 가능한 웹캠의 이름을 저장
+    availableWebcams = new string[WebCamTexture.devices.Length];
+    for (int i = 0; i < WebCamTexture.devices.Length; i++)
+    {
+     availableWebcams[i] = WebCamTexture.devices[i].name;
+    }
+}
+}
